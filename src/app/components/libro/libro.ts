@@ -33,8 +33,8 @@ export class LibroComponent implements OnInit {
   imagenPreview: string = "";
   libroSelecionado: Libro | null = null;
 
-  mostrarColumnas: string[] = ['detalles', 'idLibro', 'titulo', 'editorial', 'edicion', 'idioma', 'fechaPublicacion'
-    , 'numEjemplares', 'precio', 'autor', 'categoria', 'acciones'];
+  mostrarColumnas: string[] = ['detalles', 'idLibro', 'titulo', 'editorial', 'edicion', 'idioma', 'fechaPublicacion', 'numEjemplares', 'precio', 'autor', 'categoria', 'acciones'];
+
 
   @ViewChild('formularioLibro') formularioLibro!: ElementRef;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -55,7 +55,6 @@ export class LibroComponent implements OnInit {
     this.cargarCategorias();
     this.cargarAutores();
   }
-
   findAll(): void {
     this.libroService.findAll().subscribe(data => {
       this.dataSource = new MatTableDataSource(data);
@@ -84,18 +83,29 @@ export class LibroComponent implements OnInit {
   }
 
   update(): void {
-  if (this.idEditar !== null) {
-    const idCategoria = this.libro.categoria.idCategoria;
-    const idAutor = this.libro.autor.idAutor;
+    if (this.idEditar !== null) {
+      const idCategoria = this.libro.categoria.idCategoria;
+      const idAutor = this.libro.autor.idAutor;
 
-    this.libroService.update(this.idEditar, idCategoria, idAutor, this.libro).subscribe(() => {
-      this.libro = {} as Libro;
-      this.editar = false;
-      this.idEditar = null;
-      this.findAll();
-    });
+      this.libroService.update(this.idEditar, idCategoria, idAutor, this.libro).subscribe(() => {
+        this.libro = {} as Libro;
+        this.editar = false;
+        this.idEditar = null;
+
+        this.findAll(); // recarga los libros
+
+        // 🔄 actualiza el paginador y vuelve a la primera página
+        this.paginator.firstPage();
+        this.dataSource.paginator = this.paginator;
+
+        // Si tienes un modal abierto, lo puedes cerrar aquí:
+        this.dialog.closeAll();
+      });
+    }
   }
-}
+
+
+
 
   delete(): void {
     Swal.fire({
@@ -136,31 +146,31 @@ export class LibroComponent implements OnInit {
     form.resetForm();
   }
 
-  guardarLibro(): void{
-    if(this.editar && this.idEditar!== null){
+  guardarLibro(): void {
+    if (this.editar && this.idEditar !== null) {
       this.update();
-    } else{
+    } else {
       this.save();
     }
 
     this.dialog.closeAll();
   }
 
-  filtroLibro(event: Event): void{
+  filtroLibro(event: Event): void {
     const filtro = (event.target as HTMLInputElement).value;
     this.dataSource.filter = filtro.trim().toLowerCase();
   }
 
-  nombreCompletoAutor(autor:Autor): string{
+  nombreCompletoAutor(autor: Autor): string {
     return `${autor.nombre} ${autor.apellido}`;
   }
 
-  abrirModal(libro?: Libro ):void{
-    if(libro){
-      this.libro={...libro};
-      this.editar = true;
-      this.idEditar = libro.idLibro;
-    }else{
+  abrirModal(libro?: Libro): void {
+    if (libro) {
+      this.libro = { ...libro };              // ✅ copia los datos
+      this.editar = true;                 // ✅ activa modo edición
+      this.idEditar = libro.idLibro;      // ✅ guarda id para actualizar
+    } else {
       this.libro = {} as Libro;
       this.editar = false;
       this.idEditar = null;
@@ -172,40 +182,42 @@ export class LibroComponent implements OnInit {
     });
   }
 
-  compararAutores(a1: Autor, a2:Autor): boolean{
-    return a1 && a2 ? a1.idAutor  === a2.idAutor: a1 === a2;
+
+  compararAutores(a1: Autor, a2: Autor): boolean {
+    return a1 && a2 ? a1.idAutor === a2.idAutor : a1 === a2;
   }
 
-  compararCategorias(c1: Categoria, c2: Categoria){
+  compararCategorias(c1: Categoria, c2: Categoria): boolean {
     return c1 && c2 ? c1.idCategoria === c2.idCategoria : c1 === c2;
   }
 
-  onFileSelected(event: any){
+
+  onFileSelected(event: any) {
     this.selectedFile = event.target.files[0];
   }
 
-  subirImagen(): void{
+  subirImagen(): void {
     const formData = new FormData();
-    formData.append('file',this.selectedFile);
+    formData.append('file', this.selectedFile);
 
-    if(this.libro.portada){
+    if (this.libro.portada) {
       formData.append('oldImage', this.libro.portada);
     }
 
-    this.http.post<{ruta: string}>('http://localhost:8080/api/upload-portada', formData).subscribe(res => {
-      this.libro.portada= res.ruta;
-      this.imagenPreview= res.ruta;
-     });
-  }
-
-  abrirModalDetalles(libro: Libro): void{
-    this.libroSelecionado = libro;
-    this.dialog.open(this.modalDetalles, {
-      width:'500px'
+    this.http.post<{ ruta: string }>('http://localhost:8080/api/upload-portada', formData).subscribe(res => {
+      this.libro.portada = res.ruta;
+      this.imagenPreview = res.ruta;
     });
   }
 
-  cerrarModal(): void{
+  abrirModalDetalles(libro: Libro): void {
+    this.libroSelecionado = libro;
+    this.dialog.open(this.modalDetalles, {
+      width: '500px'
+    });
+  }
+
+  cerrarModal(): void {
     this.dialog.closeAll();
     this.libroSelecionado = null;
   }

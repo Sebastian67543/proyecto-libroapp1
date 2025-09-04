@@ -8,7 +8,7 @@ import { Categoria } from '../model/categoria.model';
 })
 export class CategoriaService {
   
-  private baseUrl="http://localhost:8080/categoria";
+  private baseUrl="http://localhost:8080/categorias";
   
   constructor(private http: HttpClient){}
 
