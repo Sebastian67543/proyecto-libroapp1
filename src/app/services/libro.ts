@@ -3,7 +3,7 @@ import { Libro } from '../model/libro.model';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-
+//cambios en libro service metodo update
 @Injectable({
   providedIn: 'root'
 })
